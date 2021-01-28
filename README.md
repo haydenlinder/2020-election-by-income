@@ -1,6 +1,7 @@
 # 2020-election-by-income
 
 Income data: https://www.ers.usda.gov/data-products/county-level-data-sets/download-data/
+
 Election data: https://embeds.ddhq.io/api/v2/2020presidential
 
 Here's some pseudo-code for how I merged the two data sets:
