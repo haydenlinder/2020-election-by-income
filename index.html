@@ -138,7 +138,9 @@
             .on('mouseover', startToolTip)
             .on('touchstart', startToolTip)
             .on('mousemove', moveToolTip)
+            .on('touchmove', moveToolTip)
             .on('mouseout', endToolTip)
+            .on('touchend', endToolTip)
         })
 
         var x = d3.scaleLinear()
