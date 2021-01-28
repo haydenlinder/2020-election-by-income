@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link href="App.css" rel="stylesheet">
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="merged-data-flat.js"></script>
+</head>
+<body class="App">
+    <div class="App-header">
+        <p>
+            2020 United States Election Results by 2019 Median Household Income per County
+        </p>
+
+        <div class='charts-container'>
+            <div class="tooltip">Info</div>
+            <svg height=600 width=300>
+            </svg>
+            <br />
+            <svg height=600 width=300 class='b'>
+            </svg>
+        </div>
+
+        <div>% vote is calculated using majority/(Biden+Trump)</div>
+        <br>
+        <a href="merged-data-flat.json" download='merged-data-flat.json' class="App-link">
+            Download merged data
+        </a>
+        <br />
+        income data: <a class="App-link" href="https://www.ers.usda.gov/data-products/county-level-data-sets/download-data/"
+            target="_blank" rel="noopener noreferrer">
+            https://www.ers.usda.gov/data-products/county-level-data-sets/download-data/
+        </a>
+        <br />
+        election data: <a class="App-link" href="https://embeds.ddhq.io/api/v2/2020presidential" target="_blank"
+            rel="noopener noreferrer">
+            https://embeds.ddhq.io/api/v2/2020presidential
+        </a>
+
+    </div>
+</body>
+
+<script >
+
+    var margin = { top: 30, right: 30, bottom: 60, left: 80 }
+    var w = 300 - margin.left - margin.right
+    var h = 600 - margin.top - margin.bottom
+
+    function draw() {
+        let maxX = 0, maxY = 0
+        var tooltip = document.querySelector('.tooltip')
+
+        data.forEach(county => {
+            var { biden, trump, income } = county
+            var p = Math.max(biden, trump) / (biden + trump)
+            maxX = p > maxX ? p : maxX
+            maxY = income > maxY ? income : maxY
+        })
+
+        maxY += 20000
+        maxX = 1
+
+        var svg1 = d3.select('svg')
+            .append("g")
+            .attr("transform", `translate(${margin.left},${margin.top})`);
+        var svg2 = d3.select('svg.b')
+            .append("g")
+            .attr("transform", `translate(${margin.left},${margin.top})`);
+
+        data.forEach(item => {
+            var { biden, trump, state, county, income } = item
+
+            var formatter = new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 0
+            });
+
+            var winner = biden >= trump ? 'Biden' : 'Trump'
+            var stroke = biden >= trump ? 'blue' : 'red'
+            var fill = biden >= trump ? 'lightblue' : 'pink'
+            var svg = biden >= trump ? svg1 : svg2
+            var p = Math.max(biden, trump) / (biden + trump)
+
+            svg
+            .append('circle')
+            .attr('cx', (w / 0.6) * (p - 0.4))
+            .attr('cy', h - (income * h / maxY))
+            .attr('r', 10)
+            .attr('fill', fill)
+            .attr('fill-opacity', 0.1)
+            .attr('stroke', stroke)
+            .attr('stroke-width', 0.5)
+            .on('mouseover', function () {
+                var d = d3.event
+                d3.select(this).raise()
+                d.target.setAttribute('fill-opacity', 1)
+                d.target.fillOpacity = 0.5
+                tooltip.style.visibility = 'visible'
+                tooltip.innerHTML = `
+            State: ${state}
+            <br/>
+            County: ${county}
+            <br/>
+            Median Income: ${formatter.format(income)}
+            <br/>
+            Biden Votes: ${biden}
+            <br/>
+            Trump Votes: ${trump}
+            <br/>
+            % in favor of ${winner}: ${(100 * p).toFixed(2)}%
+        `
+            })
+            .on('mousemove', d => {
+                var d = d3.event
+                tooltip.style.left = d.pageX + 25 + 'px'
+                tooltip.style.top = d.pageY + 15 + 'px'
+            })
+            .on('mouseout', d => {
+                var d = d3.event
+                tooltip.style.visibility = 'hidden'
+                d.target.setAttribute('fill-opacity', 0.1)
+            })
+        })
+
+        var x = d3.scaleLinear()
+        .domain([40, 100])
+        .range([0, w])
+
+        var y = d3.scaleLinear()
+        .domain([0, maxY])
+        .range([0, -h])
+
+        svg1.append("g")
+        .attr("transform", `translate(0, ${h})`)
+        .call(d3.axisBottom(x))
+
+        svg1.append("g")
+        .attr("transform", `translate(0, ${h})`)
+        .call(d3.axisLeft(y))
+
+        svg1.append('text')
+        .attr("class", "label")
+        .attr("text-anchor", "middle")
+        .attr("y", -55)
+        .attr("x", -h / 2)
+        .attr("transform", "rotate(-90)")
+        .text("Median Household Income (USD)")
+
+        svg1.append('text')
+        .attr("class", "label")
+        .attr("text-anchor", "middle")
+        .attr("y", h+40)
+        .attr("x", w/2)
+        .text("% vote for Biden")
+
+        svg1.append('text')
+        .attr("class", "label")
+        .attr("text-anchor", "middle")
+        .attr("y", 10)
+        .attr("x", w/2)
+        .text("Majority Biden")
+
+        svg2.append("g")
+        .attr("transform", "translate(0," + h + ")")
+        .call(d3.axisBottom(x))
+
+        svg2.append("g")
+        .attr("transform", "translate(0," + h + ")")
+        .call(d3.axisLeft(y))
+
+        svg2.append('text')
+        .attr("class", "label")
+        .attr("text-anchor", "middle")
+        .attr("y", -55)
+        .attr("x", -h / 2)
+        .attr("transform", "rotate(-90)")
+        .text("Median Household Income (USD)")
+
+        svg2.append('text')
+        .attr("class", "label")
+        .attr("text-anchor", "middle")
+        .attr("y", h + 40)
+        .attr("x", w / 2)
+        .text("% vote for Trump")
+
+        svg2.append('text')
+        .attr("class", "label")
+        .attr("text-anchor", "middle")
+        .attr("y", 10)
+        .attr("x", w / 2)
+        .text("Majority Trump")
+
+    }        
+    
+    draw()
+    
+</script>
+</html>
