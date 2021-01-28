@@ -93,6 +93,39 @@
             var svg = biden >= trump ? svg1 : svg2
             var p = Math.max(biden, trump) / (biden + trump)
 
+            function startToolTip() {
+                var d = d3.event
+                d3.select(this).raise()
+                d.target.setAttribute('fill-opacity', 1)
+                d.target.fillOpacity = 0.5
+                tooltip.style.visibility = 'visible'
+                tooltip.innerHTML = `
+                    State: ${state}
+                    <br/>
+                    County: ${county}
+                    <br/>
+                    Median Income: ${formatter.format(income)}
+                    <br/>
+                    Biden Votes: ${biden}
+                    <br/>
+                    Trump Votes: ${trump}
+                    <br/>
+                    % in favor of ${winner}: ${(100 * p).toFixed(2)}%
+                `
+            }
+
+            function moveToolTip () {
+                var d = d3.event
+                tooltip.style.left = d.pageX + 25 + 'px'
+                tooltip.style.top = d.pageY + 15 + 'px'
+            }
+
+            function endToolTip () {
+                var d = d3.event
+                tooltip.style.visibility = 'hidden'
+                d.target.setAttribute('fill-opacity', 0.1)
+            }
+
             svg
             .append('circle')
             .attr('cx', (w / 0.6) * (p - 0.4))
@@ -102,36 +135,10 @@
             .attr('fill-opacity', 0.1)
             .attr('stroke', stroke)
             .attr('stroke-width', 0.5)
-            .on('mouseover', function () {
-                var d = d3.event
-                d3.select(this).raise()
-                d.target.setAttribute('fill-opacity', 1)
-                d.target.fillOpacity = 0.5
-                tooltip.style.visibility = 'visible'
-                tooltip.innerHTML = `
-            State: ${state}
-            <br/>
-            County: ${county}
-            <br/>
-            Median Income: ${formatter.format(income)}
-            <br/>
-            Biden Votes: ${biden}
-            <br/>
-            Trump Votes: ${trump}
-            <br/>
-            % in favor of ${winner}: ${(100 * p).toFixed(2)}%
-        `
-            })
-            .on('mousemove', d => {
-                var d = d3.event
-                tooltip.style.left = d.pageX + 25 + 'px'
-                tooltip.style.top = d.pageY + 15 + 'px'
-            })
-            .on('mouseout', d => {
-                var d = d3.event
-                tooltip.style.visibility = 'hidden'
-                d.target.setAttribute('fill-opacity', 0.1)
-            })
+            .on('mouseover', startToolTip)
+            .on('touchstart', startToolTip)
+            .on('mousemove', moveToolTip)
+            .on('mouseout', endToolTip)
         })
 
         var x = d3.scaleLinear()
