@@ -82,6 +82,7 @@ svg {
   border-radius: 5px;
   font-size: 12px;
   text-align: left;
+  box-shadow: 5px 5px 10px rgb(87, 87, 87);
 }
 
 text.label {
